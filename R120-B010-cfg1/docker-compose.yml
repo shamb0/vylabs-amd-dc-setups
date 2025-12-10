@@ -1,0 +1,131 @@
+services:
+
+  # =================================================================
+  # PROFILE: DUAL (Teamwork Mode)
+  # Architect (30001) + Builder (30000)
+  # =================================================================
+
+  # =================================================================
+  # ARCHITECT (DeepSeek-R1-Distill) - Optimized with AITER
+  # "The Brain" - Prioritizes Reasoning & Stability
+  # =================================================================
+  architect-dual:
+    profiles: ["dual"]
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: vylabs-architect
+    restart: no
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits: &rocm_ulimits
+      memlock: -1
+      stack: 67108864
+      nofile: { soft: 1048576, hard: 1048576 }
+    devices: &rocm_devices
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes: &rocm_volumes
+      - /mnt/scratch/huggingface:/root/.cache/huggingface
+    environment:
+      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+      - HSA_NO_SCRATCH_RECLAIM=1
+      - HF_HOME=/root/.cache/huggingface
+      # [CRITICAL RESEARCH FIX] Use AITER for DeepSeek MoE/MLA stability
+      - SGLANG_USE_AITER=1
+      # [CRITICAL] Optimize Interconnect for MoE
+      - NCCL_MIN_NCHANNELS=112
+    command: >
+      python3 -m sglang.launch_server
+      --model-path deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+      --tp 1 --host 0.0.0.0 --port 30001
+      --mem-fraction-static 0.45 --kv-cache-dtype fp8_e5m2
+      --context-length 32768 --trust-remote-code
+      --attention-backend aiter
+      --chunked-prefill-size 32768
+      --tool-call-parser llama3
+
+  # =================================================================
+  # BUILDER (Qwen3-Coder-30B-A3B) - Robust SWA Fallback
+  # "The Hands" - Prioritizes Syntax & Long Context
+  # =================================================================
+  builder-dual:
+    profiles: ["dual"]
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: vylabs-builder
+    restart: no
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits: *rocm_ulimits
+    devices: *rocm_devices
+    volumes: *rocm_volumes
+    environment:
+      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+      - HSA_NO_SCRATCH_RECLAIM=1
+      - HF_HOME=/root/.cache/huggingface
+      # [CRITICAL RESEARCH FIX] Disable Triton FA to fix Sliding Window Bug (Infinite Loop)
+      - VLLM_USE_TRITON_FLASH_ATTN=0
+    command: >
+      python3 -m sglang.launch_server
+      --model-path Qwen/Qwen3-Coder-30B-A3B-Instruct
+      --tp 1 --host 0.0.0.0 --port 30000
+      --mem-fraction-static 0.40 --kv-cache-dtype bfloat16
+      --context-length 65536 --trust-remote-code
+      --chunked-prefill-size 32768
+      --tool-call-parser qwen3_coder
+
+    # =================================================================
+  # PROFILE: SOLO ARCHITECT (Ping-Pong Mode A)
+  # Architect with MAX Context (262k)
+  # =================================================================
+
+  architect-solo:
+    profiles: ["solo-architect"]
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: vylabs-architect-solo
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits: *rocm_ulimits
+    devices: *rocm_devices
+    volumes: *rocm_volumes
+    environment: *rocm_env
+    command: >
+      python3 -m sglang.launch_server
+      --model-path deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+      --tp 1 --host 0.0.0.0 --port 30001
+      --mem-fraction-static 0.90 --kv-cache-dtype fp8_e5m2
+      --context-length 262144 --trust-remote-code
+
+  # =================================================================
+  # PROFILE: SOLO BUILDER (Ping-Pong Mode B)
+  # Builder with MAX Context (262k)
+  # =================================================================
+
+  builder-solo:
+    profiles: ["solo-builder"]
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: vylabs-builder-solo
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits: *rocm_ulimits
+    devices: *rocm_devices
+    volumes: *rocm_volumes
+    environment: *rocm_env
+    command: >
+      python3 -m sglang.launch_server
+      --model-path Qwen/Qwen3-Coder-30B-A3B-Instruct
+      --tp 1 --host 0.0.0.0 --port 30000
+      --mem-fraction-static 0.90 --kv-cache-dtype bfloat16
+      --context-length 262144 --trust-remote-code
+
+
