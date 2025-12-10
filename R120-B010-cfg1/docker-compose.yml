@@ -32,6 +32,8 @@ services:
       - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
       - HSA_NO_SCRATCH_RECLAIM=1
       - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
       # [CRITICAL RESEARCH FIX] Use AITER for DeepSeek MoE/MLA stability
       - SGLANG_USE_AITER=1
       # [CRITICAL] Optimize Interconnect for MoE
@@ -67,6 +69,8 @@ services:
       - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
       - HSA_NO_SCRATCH_RECLAIM=1
       - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
       # [CRITICAL RESEARCH FIX] Disable Triton FA to fix Sliding Window Bug (Infinite Loop)
       - VLLM_USE_TRITON_FLASH_ATTN=0
     command: >
@@ -98,6 +102,8 @@ services:
       - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
       - HSA_NO_SCRATCH_RECLAIM=1
       - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
       # [CRITICAL] AITER is even MORE important at 262k for MoE routing
       - SGLANG_USE_AITER=1
       - NCCL_MIN_NCHANNELS=112
@@ -131,6 +137,8 @@ services:
       - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
       - HSA_NO_SCRATCH_RECLAIM=1
       - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
       # [CRITICAL] Prevent Infinite Loop/Garbled Text at 262k
       - VLLM_USE_TRITON_FLASH_ATTN=0
     command: >

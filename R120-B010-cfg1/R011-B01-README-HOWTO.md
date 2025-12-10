@@ -14,9 +14,9 @@
 
     **Daily Operation:**
 
-    > To focus deep on design: `./vylabs-manage.sh solo-architect`
-    > To focus deep on code: `./vylabs-manage.sh solo-builder`
-    > To stop everything: `./vylabs-manage.sh stop`
+    > To focus deep on design: `./setup-cfg01-vylabs-manage.sh solo-architect`
+    > To focus deep on code: `./setup-cfg01-vylabs-manage.sh solo-builder`
+    > To stop everything: `./setup-cfg01-vylabs-manage.sh stop`
 
 1.3.  **Connect (From your Local Machine):**
     Don't forget to run your SSH tunnel locally (as per your cheatsheet) to access these new ports:
