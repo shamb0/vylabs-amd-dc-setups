@@ -45,7 +45,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 20
-      start_period: 45s      
+      start_period: 45s
     command: >
       python3 -m sglang.launch_server
       --model-path deepseek-ai/DeepSeek-R1-Distill-Llama-70B
@@ -86,7 +86,7 @@ services:
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     depends_on:
       architect-dual:
-        condition: service_healthy      
+        condition: service_healthy
     command: >
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen3-Coder-30B-A3B-Instruct
@@ -126,12 +126,16 @@ services:
     command: >
       python3 -m sglang.launch_server
       --model-path deepseek-ai/DeepSeek-R1-Distill-Llama-70B
-      --tp 1 --host 0.0.0.0 --port 30001
-      --mem-fraction-static 0.90 --kv-cache-dtype fp8_e5m2
-      --context-length 262144 --trust-remote-code
+      --tp 1 --host 0.0.0.0
+      --port 30001
+      --mem-fraction-static 0.65
+      --kv-cache-dtype bfloat16
+      --context-length 131072
+      --trust-remote-code
       --attention-backend aiter
       --chunked-prefill-size 32768
       --tool-call-parser llama3
+      --quantization fp8
 
   # =================================================================
   # PROFILE: SOLO BUILDER (Ping-Pong Mode B)
@@ -167,4 +171,5 @@ services:
       --context-length 262144 --trust-remote-code
       --chunked-prefill-size 32768
       --tool-call-parser qwen3_coder
+
 
