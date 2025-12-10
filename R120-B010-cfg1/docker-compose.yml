@@ -124,6 +124,7 @@ services:
       - NCCL_SOCKET_IFNAME=eth0
       # [CRITICAL] AITER is even MORE important at 262k for MoE routing
       - SGLANG_USE_AITER=1
+      - USE_ROCM_AITER_ROPE_BACKEND=0
       - NCCL_MIN_NCHANNELS=112
       # [NEW] Help with fragmentation
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
