@@ -38,15 +38,24 @@ services:
       - SGLANG_USE_AITER=1
       # [CRITICAL] Optimize Interconnect for MoE
       - NCCL_MIN_NCHANNELS=112
+      # [NEW] Help with fragmentation
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; print(urllib.request.urlopen('http://localhost:30001/health').read())\" || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 45s      
     command: >
       python3 -m sglang.launch_server
       --model-path deepseek-ai/DeepSeek-R1-Distill-Llama-70B
       --tp 1 --host 0.0.0.0 --port 30001
-      --mem-fraction-static 0.45 --kv-cache-dtype fp8_e5m2
+      --mem-fraction-static 0.42 --kv-cache-dtype fp8_e5m2
       --context-length 32768 --trust-remote-code
       --attention-backend aiter
       --chunked-prefill-size 32768
       --tool-call-parser llama3
+      --quantization fp8
 
   # =================================================================
   # BUILDER (Qwen3-Coder-30B-A3B) - Robust SWA Fallback
@@ -73,11 +82,16 @@ services:
       - NCCL_SOCKET_IFNAME=eth0
       # [CRITICAL RESEARCH FIX] Disable Triton FA to fix Sliding Window Bug (Infinite Loop)
       - VLLM_USE_TRITON_FLASH_ATTN=0
+      # [NEW] Help with fragmentation
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    depends_on:
+      architect-dual:
+        condition: service_healthy      
     command: >
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen3-Coder-30B-A3B-Instruct
       --tp 1 --host 0.0.0.0 --port 30000
-      --mem-fraction-static 0.40 --kv-cache-dtype bfloat16
+      --mem-fraction-static 0.38 --kv-cache-dtype bfloat16
       --context-length 65536 --trust-remote-code
       --chunked-prefill-size 32768
       --tool-call-parser qwen3_coder
@@ -107,6 +121,8 @@ services:
       # [CRITICAL] AITER is even MORE important at 262k for MoE routing
       - SGLANG_USE_AITER=1
       - NCCL_MIN_NCHANNELS=112
+      # [NEW] Help with fragmentation
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     command: >
       python3 -m sglang.launch_server
       --model-path deepseek-ai/DeepSeek-R1-Distill-Llama-70B
@@ -141,6 +157,8 @@ services:
       - NCCL_SOCKET_IFNAME=eth0
       # [CRITICAL] Prevent Infinite Loop/Garbled Text at 262k
       - VLLM_USE_TRITON_FLASH_ATTN=0
+      # [NEW] Help with fragmentation
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     command: >
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen3-Coder-30B-A3B-Instruct

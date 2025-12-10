@@ -89,7 +89,7 @@ start_mode() {
     
     # A. Clean Slate (Stop existing containers to free VRAM)
     log_info "Shutting down active containers..."
-    docker compose down --remove-orphans 2>/dev/null
+    docker compose down 2>/dev/null
     
     # B. Launch New Profile
     # The --profile flag tells docker-compose which set of services to start
