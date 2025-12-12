@@ -37,7 +37,7 @@ services:
     command: >
       python3 -m sglang.launch_server
       --model-path meta-llama/Llama-3.3-70B-Instruct
-      --tp 1 --host 0.0.0.0 --port 30000
+      --tp 1 --host 0.0.0.0 --port 30001
       --mem-fraction-static 0.92
       --kv-cache-dtype fp8_e5m2
       --context-length 131072
@@ -49,6 +49,11 @@ services:
   # OPTION F: The Open Heavyweight (72B) - STABILIZED
   # Qwen 2.5 72B - Native BF16 Mode (High Stability)
   # Fits on MI300X: Weights (145GB) + 32k Cache (~20GB) = ~165GB / 192GB
+  # =================================================================
+# =================================================================
+  # OPTION F: The Open Heavyweight (72B) - 128K FIXED
+  # Qwen 2.5 72B - Native BF16 Mode (High Stability)
+  # Fits on MI300X: Weights (144GB) + 128k Cache (40GB) = ~184GB / 192GB
   # =================================================================
   architect-solo-72b-qwen:
     profiles: ["solo-architect-72b"]
@@ -77,13 +82,15 @@ services:
       # [CRITICAL FIX] Disable AITER to prevent dtype mismatch crash
       - SGLANG_USE_AITER=0
       - NCCL_MIN_NCHANNELS=112
+      # Enable memory optimization for large context
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     command: >
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen2.5-72B-Instruct
-      --tp 1 --host 0.0.0.0 --port 30000
-      --mem-fraction-static 0.90
+      --tp 1 --host 0.0.0.0 --port 30001
+      --mem-fraction-static 0.96
       --kv-cache-dtype bfloat16
-      --context-length 32768
+      --context-length 131072
       --trust-remote-code
       --attention-backend triton
       --tool-call-parser qwen25
