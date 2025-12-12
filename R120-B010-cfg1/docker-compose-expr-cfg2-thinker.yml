@@ -24,6 +24,7 @@ services:
     volumes:
       - /mnt/scratch/huggingface:/root/.cache/huggingface
     environment:
+      - HF_TOKEN=${HF_TOKEN}
       - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
       - HSA_NO_SCRATCH_RECLAIM=1
       - HF_HOME=/root/.cache/huggingface
@@ -43,6 +44,50 @@ services:
       --trust-remote-code
       --attention-backend aiter
       --tool-call-parser llama3
+
+  # =================================================================
+  # OPTION F: The Open Heavyweight (72B)
+  # Qwen 2.5 72B - Ungated, High IQ, Native Tools
+  # Fits on single MI300X (192GB)
+  # =================================================================
+  architect-solo-72b-qwen:
+    profiles: ["solo-architect-72b"]
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: vylabs-architect-72b
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits:
+      memlock: -1
+      stack: 67108864
+      nofile: { soft: 1048576, hard: 1048576 }
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - /mnt/scratch/huggingface:/root/.cache/huggingface
+    environment:
+      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+      - HSA_NO_SCRATCH_RECLAIM=1
+      - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
+      - SGLANG_USE_AITER=1
+      - NCCL_MIN_NCHANNELS=112
+      # Expandable segments help manage the large VRAM allocation
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    command: >
+      python3 -m sglang.launch_server
+      --model-path Qwen/Qwen2.5-72B-Instruct
+      --tp 1 --host 0.0.0.0 --port 30000
+      --mem-fraction-static 0.92
+      --kv-cache-dtype fp8_e5m2
+      --context-length 131072
+      --trust-remote-code
+      --attention-backend aiter
+      --tool-call-parser qwen25
 
   architect-solo-dr1-distill-32b:
     profiles: ["solo-architect-32b"]
