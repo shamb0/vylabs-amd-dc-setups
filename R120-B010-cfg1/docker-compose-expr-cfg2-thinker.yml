@@ -37,7 +37,7 @@ services:
     command: >
       python3 -m sglang.launch_server
       --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
-      --tp 1 --host 0.0.0.0 --port 30000
+      --tp 1 --host 0.0.0.0 --port 30001
       --mem-fraction-static 0.80
       --kv-cache-dtype bfloat16
       --context-length 131072
@@ -79,13 +79,13 @@ services:
     command: >
       python3 -m sglang.launch_server
       --model-path deepseek-ai/DeepSeek-R1-Distill-Qwen-14B
-      --tp 1 --host 0.0.0.0 --port 30000
+      --tp 1 --host 0.0.0.0 --port 30001
       --mem-fraction-static 0.80
       --kv-cache-dtype bfloat16
       --context-length 131072
       --trust-remote-code
       --attention-backend aiter
-      --tool-call-parser qwen25
+      --tool-call-parser qwen
 
   # =================================================================
   # OPTION B: The Standard Bearer (8B)
@@ -119,7 +119,7 @@ services:
     command: >
       python3 -m sglang.launch_server
       --model-path deepseek-ai/DeepSeek-R1-Distill-Llama-8B
-      --tp 1 --host 0.0.0.0 --port 30000
+      --tp 1 --host 0.0.0.0 --port 30001
       --mem-fraction-static 0.80
       --kv-cache-dtype bfloat16
       --context-length 131072
@@ -160,7 +160,7 @@ services:
     command: >
       python3 -m sglang.launch_server
       --model-path google/gemma-3-27b-it
-      --tp 1 --host 0.0.0.0 --port 30000
+      --tp 1 --host 0.0.0.0 --port 30001
       --mem-fraction-static 0.80
       --kv-cache-dtype bfloat16
       --context-length 131072
