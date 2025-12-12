@@ -38,37 +38,6 @@ services:
       --chunked-prefill-size 32768
       --tool-call-parser qwen3_coder
 
-  builder-solo-moonshotai-Kimi-K2-Instruct:
-    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
-    container_name: vylabs-builder-solo
-    ipc: host
-    network_mode: host
-    privileged: true
-    cap_add: [SYS_PTRACE]
-    security_opt: [seccomp=unconfined]
-    ulimits: *rocm_ulimits
-    devices: *rocm_devices
-    volumes: *rocm_volumes
-    environment:
-      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
-      - HSA_NO_SCRATCH_RECLAIM=1
-      - HF_HOME=/root/.cache/huggingface
-      - GLOO_SOCKET_IFNAME=eth0
-      - NCCL_SOCKET_IFNAME=eth0
-      - SGLANG_USE_AITER=1
-      - VLLM_USE_TRITON_FLASH_ATTN=0
-    command: >
-      python3 -m sglang.launch_server
-      --model-path moonshotai/Kimi-K2-Instruct
-      --tp 1 --host 0.0.0.0 --port 30000
-      --mem-fraction-static 0.90
-      --kv-cache-dtype bfloat16
-      --context-length 131072
-      --trust-remote-code
-      --attention-backend aiter
-      --chunked-prefill-size 32768
-      --tool-call-parser qwen3_coder
-
 
   builder-solo-google-codegemma-7b-it:
     image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
@@ -100,3 +69,42 @@ services:
       --attention-backend aiter
       --chunked-prefill-size 32768
       --tool-call-parser qwen3_coder
+
+  # =================================================================
+  # OPTION D: The Efficient Builder (16B)
+  # Moonlight 16B (Moonshot AI) - 16B Total / 3B Active
+  # =================================================================
+  builder-solo-16b-moonlight:
+    profiles: ["solo-builder-16b"]
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: vylabs-builder-16b
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits:
+      memlock: -1
+      stack: 67108864
+      nofile: { soft: 1048576, hard: 1048576 }
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - /mnt/scratch/huggingface:/root/.cache/huggingface
+    environment:
+      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+      - HSA_NO_SCRATCH_RECLAIM=1
+      - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
+      - SGLANG_USE_AITER=1
+      - VLLM_USE_TRITON_FLASH_ATTN=0
+    command: >
+      python3 -m sglang.launch_server
+      --model-path moonshotai/Moonlight-16B-A3B-Instruct
+      --tp 1 --host 0.0.0.0 --port 30000
+      --mem-fraction-static 0.80
+      --kv-cache-dtype bfloat16
+      --context-length 131072
+      --trust-remote-code
