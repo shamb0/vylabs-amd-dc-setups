@@ -46,9 +46,9 @@ services:
       --tool-call-parser llama3
 
   # =================================================================
-  # OPTION F: The Open Heavyweight (72B)
-  # Qwen 2.5 72B - Ungated, High IQ, Native Tools
-  # Fits on single MI300X (192GB)
+  # OPTION F: The Open Heavyweight (72B) - STABILIZED
+  # Qwen 2.5 72B - Native BF16 Mode (High Stability)
+  # Fits on MI300X: Weights (145GB) + 32k Cache (~20GB) = ~165GB / 192GB
   # =================================================================
   architect-solo-72b-qwen:
     profiles: ["solo-architect-72b"]
@@ -74,19 +74,18 @@ services:
       - HF_HOME=/root/.cache/huggingface
       - GLOO_SOCKET_IFNAME=eth0
       - NCCL_SOCKET_IFNAME=eth0
-      - SGLANG_USE_AITER=1
+      # [CRITICAL FIX] Disable AITER to prevent dtype mismatch crash
+      - SGLANG_USE_AITER=0
       - NCCL_MIN_NCHANNELS=112
-      # Expandable segments help manage the large VRAM allocation
-      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     command: >
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen2.5-72B-Instruct
       --tp 1 --host 0.0.0.0 --port 30000
-      --mem-fraction-static 0.92
-      --kv-cache-dtype fp8_e5m2
-      --context-length 131072
+      --mem-fraction-static 0.90
+      --kv-cache-dtype bfloat16
+      --context-length 32768
       --trust-remote-code
-      --attention-backend aiter
+      --attention-backend triton
       --tool-call-parser qwen25
 
   architect-solo-dr1-distill-32b:
