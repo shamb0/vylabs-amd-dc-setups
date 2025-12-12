@@ -1,9 +1,9 @@
 services:
 
   # =================================================================
-  # OPTION E: The Powerhouse Architect (70B)
-  # Llama 3.3 - 128k Context + Native Tools
-  # Fits on single MI300X (192GB)
+  # OPTION E: The Powerhouse Architect (70B) - STABLE 128K
+  # Llama 3.3 - Native BF16 Mode (No Crashes)
+  # Fits on MI300X: Weights (140GB) + 128k Cache (40GB) = ~180GB / 192GB
   # =================================================================
   architect-solo-70b-llama:
     profiles: ["solo-architect-70b"]
@@ -30,27 +30,23 @@ services:
       - HF_HOME=/root/.cache/huggingface
       - GLOO_SOCKET_IFNAME=eth0
       - NCCL_SOCKET_IFNAME=eth0
-      - SGLANG_USE_AITER=1
+      # [CRITICAL] Disable AITER to stop the dtype crash
+      - SGLANG_USE_AITER=0
       - NCCL_MIN_NCHANNELS=112
-      # [CRITICAL] Enable Expandable Segments to avoid fragmentation with large context
+      # Manage memory fragmentation for the massive 180GB allocation
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     command: >
       python3 -m sglang.launch_server
       --model-path meta-llama/Llama-3.3-70B-Instruct
-      --tp 1 --host 0.0.0.0 --port 30001
-      --mem-fraction-static 0.92
-      --kv-cache-dtype fp8_e5m2
-      --context-length 131072
+      --tp 1 --host 0.0.0.0 --port 30000
+      --mem-fraction-static 0.94
+      --kv-cache-dtype bfloat16
+      --context-length 128000
       --trust-remote-code
-      --attention-backend aiter
+      --attention-backend triton
       --tool-call-parser llama3
 
   # =================================================================
-  # OPTION F: The Open Heavyweight (72B) - STABILIZED
-  # Qwen 2.5 72B - Native BF16 Mode (High Stability)
-  # Fits on MI300X: Weights (145GB) + 32k Cache (~20GB) = ~165GB / 192GB
-  # =================================================================
-# =================================================================
   # OPTION F: The Open Heavyweight (72B) - 128K FIXED
   # Qwen 2.5 72B - Native BF16 Mode (High Stability)
   # Fits on MI300X: Weights (144GB) + 128k Cache (40GB) = ~184GB / 192GB
