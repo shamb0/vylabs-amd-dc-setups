@@ -44,7 +44,7 @@ services:
       --trust-remote-code
       --attention-backend aiter
       --chunked-prefill-size 32768
-      --tool-call-parser qwen25
+      --tool-call-parser qwen
 
   # =================================================================
   # OPTION A: The Efficient Strategist (14B)
