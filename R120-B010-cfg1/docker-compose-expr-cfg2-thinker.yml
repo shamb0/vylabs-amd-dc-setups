@@ -9,14 +9,14 @@ services:
     privileged: true
     cap_add: [SYS_PTRACE]
     security_opt: [seccomp=unconfined]
-    ulimits: &rocm_ulimits
+    ulimits:
       memlock: -1
       stack: 67108864
       nofile: { soft: 1048576, hard: 1048576 }
-    devices: &rocm_devices
+    devices:
       - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri
-    volumes: &rocm_volumes
+    volumes:
       - /mnt/scratch/huggingface:/root/.cache/huggingface
     environment:
       - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
