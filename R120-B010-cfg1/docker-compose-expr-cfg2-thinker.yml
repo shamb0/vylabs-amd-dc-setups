@@ -1,5 +1,49 @@
 services:
 
+  # =================================================================
+  # OPTION E: The Powerhouse Architect (70B)
+  # Llama 3.3 - 128k Context + Native Tools
+  # Fits on single MI300X (192GB)
+  # =================================================================
+  architect-solo-70b-llama:
+    profiles: ["solo-architect-70b"]
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: vylabs-architect-70b
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits:
+      memlock: -1
+      stack: 67108864
+      nofile: { soft: 1048576, hard: 1048576 }
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - /mnt/scratch/huggingface:/root/.cache/huggingface
+    environment:
+      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+      - HSA_NO_SCRATCH_RECLAIM=1
+      - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
+      - SGLANG_USE_AITER=1
+      - NCCL_MIN_NCHANNELS=112
+      # [CRITICAL] Enable Expandable Segments to avoid fragmentation with large context
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    command: >
+      python3 -m sglang.launch_server
+      --model-path meta-llama/Llama-3.3-70B-Instruct
+      --tp 1 --host 0.0.0.0 --port 30000
+      --mem-fraction-static 0.92
+      --kv-cache-dtype fp8_e5m2
+      --context-length 131072
+      --trust-remote-code
+      --attention-backend aiter
+      --tool-call-parser llama3
+
   architect-solo-dr1-distill-32b:
     profiles: ["solo-architect-32b"]
     image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
@@ -24,7 +68,7 @@ services:
       - HF_HOME=/root/.cache/huggingface
       - GLOO_SOCKET_IFNAME=eth0
       - NCCL_SOCKET_IFNAME=eth0
-      # AITER is mandatory for DeepSeek-R1 performance      
+      # AITER is mandatory for DeepSeek-R1 performance
       - SGLANG_USE_AITER=1
       - NCCL_MIN_NCHANNELS=112
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
