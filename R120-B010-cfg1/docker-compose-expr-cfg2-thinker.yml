@@ -45,11 +45,11 @@ services:
       --trust-remote-code
       --attention-backend triton
       --tool-call-parser llama3
-
+      
   # =================================================================
-  # OPTION F: The Open Heavyweight (72B) - 128K FIXED
-  # Qwen 2.5 72B - Native BF16 Mode (High Stability)
-  # Fits on MI300X: Weights (144GB) + 128k Cache (40GB) = ~184GB / 192GB
+  # OPTION F: The Open Heavyweight (72B) - 128K UNLOCKED
+  # Qwen 2.5 72B - Force-Enables 128k Context via YaRN
+  # Fits on MI300X: ~165GB VRAM used
   # =================================================================
   architect-solo-72b-qwen:
     profiles: ["solo-architect-72b"]
@@ -75,21 +75,20 @@ services:
       - HF_HOME=/root/.cache/huggingface
       - GLOO_SOCKET_IFNAME=eth0
       - NCCL_SOCKET_IFNAME=eth0
-      # [CRITICAL FIX] Disable AITER to prevent dtype mismatch crash
       - SGLANG_USE_AITER=0
       - NCCL_MIN_NCHANNELS=112
-      # Enable memory optimization for large context
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     command: >
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen2.5-72B-Instruct
       --tp 1 --host 0.0.0.0 --port 30001
-      --mem-fraction-static 0.96
+      --mem-fraction-static 0.92
       --kv-cache-dtype bfloat16
       --context-length 131072
       --trust-remote-code
       --attention-backend triton
       --tool-call-parser qwen25
+      --json-model-override-args '{"rope_scaling": {"type": "yarn", "factor": 4.0, "original_max_position_embeddings": 32768}, "max_position_embeddings": 131072}'
 
   architect-solo-dr1-distill-32b:
     profiles: ["solo-architect-32b"]
