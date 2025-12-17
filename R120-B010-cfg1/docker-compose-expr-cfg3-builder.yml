@@ -38,7 +38,7 @@ services:
       --trust-remote-code
       --attention-backend triton
       --chunked-prefill-size 8192
-      --tool-call-parser qwen25
+      --tool-call-parser qwen3_coder
 
   builder-solo-Qwen-Qwen3-Coder-30B-A3B-Instruct-Aiter:
     profiles: ["solo-builder-30b-262k-aiter"]
