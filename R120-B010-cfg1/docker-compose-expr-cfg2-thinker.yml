@@ -78,6 +78,7 @@ services:
       - SGLANG_USE_AITER=0
       - NCCL_MIN_NCHANNELS=112
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      - MAX_MCP_OUTPUT_TOKENS=8000
     command: >
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen2.5-72B-Instruct
@@ -87,7 +88,8 @@ services:
       --context-length 131072
       --trust-remote-code
       --attention-backend triton
-      --tool-call-parser qwen25
+      --chunked-prefill-size 8192
+      --tool-call-parser qwen
       --json-model-override-args '{"rope_scaling": {"type": "yarn", "factor": 4.0, "original_max_position_embeddings": 32768}, "max_position_embeddings": 131072}'
 
 
