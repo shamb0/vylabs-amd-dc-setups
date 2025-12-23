@@ -127,7 +127,7 @@ services:
       --quantization fp8
       --kv-cache-dtype bfloat16
       --context-length 81920
-      --mem-fraction-static 0.65
+      --mem-fraction-static 0.30
       --trust-remote-code
       --attention-backend triton
       --chunked-prefill-size 4096
