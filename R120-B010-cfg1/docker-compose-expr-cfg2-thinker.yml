@@ -45,7 +45,7 @@ services:
       --trust-remote-code
       --attention-backend triton
       --tool-call-parser llama3
-      
+
   # =================================================================
   # OPTION F: The Open Heavyweight (72B) - 128K UNLOCKED
   # Qwen 2.5 72B - Force-Enables 128k Context via YaRN
@@ -92,6 +92,47 @@ services:
       --tool-call-parser qwen
       --json-model-override-args '{"rope_scaling": {"type": "yarn", "factor": 4.0, "original_max_position_embeddings": 32768}, "max_position_embeddings": 131072}'
 
+  architect-solo-qwen3-next-80b-80k:
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: architect-solo-qwen3-next-80b-80k
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits:
+      memlock: -1
+      stack: 67108864
+      nofile: { soft: 1048576, hard: 1048576 }
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - /mnt/scratch/huggingface:/root/.cache/huggingface
+    environment:
+      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+      - HSA_NO_SCRATCH_RECLAIM=1
+      - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
+      - SGLANG_USE_AITER=0
+      - SGLANG_USE_TRITON_FLASH_ATTN=1
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      - MAX_MCP_OUTPUT_TOKENS=8000
+    command: >
+      python3 -m sglang.launch_server
+      --model-path Qwen/Qwen3-Next-80B-A3B-Thinking
+      --tp 1 --host 0.0.0.0 --port 30002
+      --quantization fp8
+      --kv-cache-dtype bfloat16
+      --context-length 81920
+      --mem-fraction-static 0.95
+      --trust-remote-code
+      --attention-backend triton
+      --chunked-prefill-size 4096
+      --gpu-memory-utilization 0.95
+      --enable-prefix-caching
+      --tool-call-parser qwen3
 
   # =================================================================
   # SERVICE: The Open Heavyweight (72B) - "IRONCLAD 160K"
@@ -143,7 +184,7 @@ services:
       --chunked-prefill-size 8192
       --enable-mixed-chunk
       --json-model-override-args '{"rope_scaling": {"type": "yarn", "factor": 5.0, "original_max_position_embeddings": 32768}, "max_position_embeddings": 163840}'
-      
+
   architect-solo-dr1-distill-32b:
     profiles: ["solo-architect-32b"]
     image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
