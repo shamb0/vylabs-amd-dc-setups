@@ -74,7 +74,7 @@ services:
       --tp 1 --host 0.0.0.0 --port 30003
       --mem-fraction-static 0.85
       --kv-cache-dtype bfloat16
-      --context-length 262144  # 256K context
+      --context-length 262144
       --trust-remote-code
       --attention-backend triton
       --chunked-prefill-size 8192
