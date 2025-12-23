@@ -131,7 +131,6 @@ services:
       --trust-remote-code
       --attention-backend triton
       --chunked-prefill-size 4096
-      --gpu-memory-utilization 0.95
       --tool-call-parser qwen
 
   # =================================================================
