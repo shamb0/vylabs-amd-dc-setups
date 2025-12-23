@@ -40,8 +40,9 @@ services:
       --chunked-prefill-size 8192
       --tool-call-parser qwen3_coder
 
-  builder-solo-Qwen-Qwen3-VL-30B:
+  solo-builder-Qwen-Qwen3-VL-30B:
     image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    profiles: ["solo-builder-Qwen-Qwen3-VL-30B"]
     container_name: vylabs-builder-solo-vl-30b
     ipc: host
     network_mode: host
@@ -70,7 +71,7 @@ services:
     command: >
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen3-VL-30B-A3B-Instruct
-      --tp 1 --host 0.0.0.0 --port 30000
+      --tp 1 --host 0.0.0.0 --port 30003
       --mem-fraction-static 0.85
       --kv-cache-dtype bfloat16
       --context-length 262144  # 256K context
