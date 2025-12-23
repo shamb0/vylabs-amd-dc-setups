@@ -133,7 +133,7 @@ services:
       --chunked-prefill-size 4096
       --gpu-memory-utilization 0.95
       --enable-prefix-caching
-      --tool-call-parser qwen3
+      --tool-call-parser qwen
 
   # =================================================================
   # SERVICE: The Open Heavyweight (72B) - "IRONCLAD 160K"
