@@ -141,7 +141,6 @@ services:
       --mem-fraction-static 0.92
       --trust-remote-code
       --attention-backend triton
-      --disable-cuda-graph
       --chunked-prefill-size 16384
       --reasoning-parser qwen3
       --tool-call-parser qwen
