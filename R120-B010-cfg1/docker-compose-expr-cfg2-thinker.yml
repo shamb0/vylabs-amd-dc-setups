@@ -94,6 +94,7 @@ services:
 
   solo-architect-qwen3-next-80b-80k:
     profiles: ["solo-architect-qwen3-next-80b-80k"]
+    # 1. USE THE STABLE IMAGE (Compatible with your hardware)
     image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
     container_name: architect-solo-qwen3-next-80b-80k
     ipc: host
@@ -118,7 +119,54 @@ services:
       - NCCL_SOCKET_IFNAME=eth0
       - SGLANG_USE_AITER=0
       - SGLANG_USE_TRITON_FLASH_ATTN=1
-      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      - MAX_MCP_OUTPUT_TOKENS=8000
+    # 2. APPLY THE HOT PATCH (Fixes the Qwen3 crash)
+    command: >
+      bash -c "
+      echo '[INFO] Applying Hot Patch for Qwen3-Next on ROCm...' &&
+      sed -i 's/self.alt_stream.wait_stream(current_stream)/if self.alt_stream is not None: self.alt_stream.wait_stream(current_stream)/g' /sgl-workspace/sglang/python/sglang/srt/models/qwen3_next.py &&
+      echo '[INFO] Patch Applied. Launching Server...' &&
+      python3 -m sglang.launch_server
+      --model-path Qwen/Qwen3-Next-80B-A3B-Thinking
+      --tp 1 --host 0.0.0.0 --port 30002
+      --quantization fp8
+      --kv-cache-dtype bfloat16
+      --context-length 81920
+      --mem-fraction-static 0.92
+      --trust-remote-code
+      --attention-backend triton
+      --disable-cuda-graph
+      --chunked-prefill-size 16384
+      --reasoning-parser qwen3
+      --tool-call-parser qwen25
+      "
+
+  solo-architect-qwen3-next-80b-80k-bup1:
+    profiles: ["solo-architect-qwen3-next-80b-80k-bup1"]
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: architect-solo-qwen3-next-80b-80k
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits:
+      memlock: -1
+      stack: 67108864
+      nofile: { soft: 1048576, hard: 1048576 }
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - /mnt/scratch/huggingface:/root/.cache/huggingface
+    environment:
+      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+      - HSA_NO_SCRATCH_RECLAIM=1
+      - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
+      - SGLANG_USE_AITER=0
+      - SGLANG_USE_TRITON_FLASH_ATTN=1
       - MAX_MCP_OUTPUT_TOKENS=8000
     command: >
       python3 -m sglang.launch_server
