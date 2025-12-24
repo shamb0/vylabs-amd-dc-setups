@@ -134,7 +134,7 @@ services:
       echo '[INFO] Patch Complete. Launching Server...' &&
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen3-Next-80B-A3B-Thinking
-      --tp 1 --host 0.0.0.0 --port 30002
+      --tp 1 --host 0.0.0.0 --port 30001
       --quantization fp8
       --kv-cache-dtype bfloat16
       --context-length 81920
