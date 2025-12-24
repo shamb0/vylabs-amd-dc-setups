@@ -129,9 +129,8 @@ services:
     command: >
       bash -c "
       echo '[INFO] Applying Double-Sided Hot Patch for Qwen3-Next...' &&
-      TARGET_FILE='/sgl-workspace/sglang/python/sglang/srt/models/qwen3_next.py' &&
-      sed -i 's/self.alt_stream.wait_stream(current_stream)/if self.alt_stream is not None: self.alt_stream.wait_stream(current_stream)/g' \$TARGET_FILE &&
-      sed -i 's/current_stream.wait_stream(self.alt_stream)/if self.alt_stream is not None: current_stream.wait_stream(self.alt_stream)/g' \$TARGET_FILE &&
+      sed -i 's/self.alt_stream.wait_stream(current_stream)/if self.alt_stream is not None: self.alt_stream.wait_stream(current_stream)/g' /sgl-workspace/sglang/python/sglang/srt/models/qwen3_next.py &&
+      sed -i 's/current_stream.wait_stream(self.alt_stream)/if self.alt_stream is not None: current_stream.wait_stream(self.alt_stream)/g' /sgl-workspace/sglang/python/sglang/srt/models/qwen3_next.py &&
       echo '[INFO] Patch Complete. Launching Server...' &&
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen3-Next-80B-A3B-Thinking
@@ -147,6 +146,7 @@ services:
       --reasoning-parser qwen3
       --tool-call-parser qwen
       "
+
   solo-architect-qwen3-next-80b-80k-bup1:
     profiles: ["solo-architect-qwen3-next-80b-80k-bup1"]
     image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
