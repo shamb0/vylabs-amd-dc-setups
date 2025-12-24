@@ -127,11 +127,12 @@ services:
       --quantization fp8
       --kv-cache-dtype bfloat16
       --context-length 81920
-      --mem-fraction-static 0.50
+      --mem-fraction-static 0.92
       --trust-remote-code
       --attention-backend triton
-      --chunked-prefill-size 4096
-      --tool-call-parser qwen
+      --chunked-prefill-size 16384
+      --reasoning-parser qwen3
+      --tool-call-parser qwen25
 
   # =================================================================
   # SERVICE: The Open Heavyweight (72B) - "IRONCLAD 160K"
