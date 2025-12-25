@@ -196,6 +196,7 @@ services:
       --attention-backend triton
       --chunked-prefill-size 16384
       --tool-call-parser qwen
+      --reasoning-parser deepseek-r1
       "
 
 
