@@ -92,8 +92,8 @@ services:
       --tool-call-parser qwen
       --json-model-override-args '{"rope_scaling": {"type": "yarn", "factor": 4.0, "original_max_position_embeddings": 32768}, "max_position_embeddings": 131072}'
 
-  solo-architect-qwen3-next-80b-80k:
-    profiles: ["solo-architect-qwen3-next-80b-80k"]
+  solo-architect-qwen3-next-80b-80k-parser-on:
+    profiles: ["solo-architect-qwen3-next-80b-80k-parser-on"]
     # 1. USE THE STABLE IMAGE (Compatible with your hardware)
     image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
     container_name: architect-solo-qwen3-next-80b-80k
@@ -121,30 +121,91 @@ services:
       - SGLANG_USE_TRITON_FLASH_ATTN=1
       - MAX_MCP_OUTPUT_TOKENS=8000
     # =========================================================================
-    # THE DOUBLE-SIDED HOT PATCH
-    # 1. Fixes the 'Fork' crash: self.alt_stream.wait_stream(...)
-    # 2. Fixes the 'Join' crash: current_stream.wait_stream(self.alt_stream)
-    # 3. Updates deprecated argument 'qwen25' -> 'qwen'
+    # EXPERIMENT A: Parser Enabled
+    # 1. Applies ROCm Hot Patch
+    # 2. Uses --reasoning-parser deepseek-r1 to extract thoughts
+    # 3. Uses Speculative Decoding (MTP) for speed
     # =========================================================================
     command: >
       bash -c "
       echo '[INFO] Applying Double-Sided Hot Patch for Qwen3-Next...' &&
       sed -i 's/self.alt_stream.wait_stream(current_stream)/if self.alt_stream is not None: self.alt_stream.wait_stream(current_stream)/g' /sgl-workspace/sglang/python/sglang/srt/models/qwen3_next.py &&
       sed -i 's/current_stream.wait_stream(self.alt_stream)/if self.alt_stream is not None: current_stream.wait_stream(self.alt_stream)/g' /sgl-workspace/sglang/python/sglang/srt/models/qwen3_next.py &&
-      echo '[INFO] Patch Complete. Launching Server...' &&
+      echo '[INFO] Patch Complete. Launching Experiment A (DeepSeek Parser)...' &&
       python3 -m sglang.launch_server
       --model-path Qwen/Qwen3-Next-80B-A3B-Thinking
       --tp 1 --host 0.0.0.0 --port 30001
       --quantization fp8
       --kv-cache-dtype bfloat16
-      --context-length 81920
+      --context-length 131072
       --mem-fraction-static 0.92
       --trust-remote-code
       --attention-backend triton
       --chunked-prefill-size 16384
-      --reasoning-parser qwen3
-      --tool-call-parser qwen
+      --reasoning-parser deepseek-r1
+      --speculative-algo NEXTN
+      --speculative-num-steps 3
+      --speculative-eagle-topk 1
+      --speculative-num-draft-tokens 4
       "
+
+  solo-architect-qwen3-next-80b-80k-parser-off:
+    profiles: ["solo-architect-qwen3-next-80b-80k-parser-off"]
+    # 1. USE THE STABLE IMAGE (Compatible with your hardware)
+    image: lmsysorg/sglang:v0.5.5.post3-rocm700-mi30x
+    container_name: architect-solo-qwen3-next-80b-80k
+    ipc: host
+    network_mode: host
+    privileged: true
+    cap_add: [SYS_PTRACE]
+    security_opt: [seccomp=unconfined]
+    ulimits:
+      memlock: -1
+      stack: 67108864
+      nofile: { soft: 1048576, hard: 1048576 }
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - /mnt/scratch/huggingface:/root/.cache/huggingface
+    environment:
+      - SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+      - HSA_NO_SCRATCH_RECLAIM=1
+      - HF_HOME=/root/.cache/huggingface
+      - GLOO_SOCKET_IFNAME=eth0
+      - NCCL_SOCKET_IFNAME=eth0
+      - SGLANG_USE_AITER=0
+      - SGLANG_USE_TRITON_FLASH_ATTN=1
+      - MAX_MCP_OUTPUT_TOKENS=8000
+    # =========================================================================
+    # EXPERIMENT B: TRANSPARENT BRAIN (No Parser)
+    # 1. Applies ROCm Hot Patch
+    # 2. NO parser (Raw <think> tags flow to client)
+    # 3. Uses Speculative Decoding (MTP) for speed
+    # =========================================================================
+    command: >
+      bash -c "
+      echo '[INFO] Applying Double-Sided Hot Patch for Qwen3-Next...' &&
+      sed -i 's/self.alt_stream.wait_stream(current_stream)/if self.alt_stream is not None: self.alt_stream.wait_stream(current_stream)/g' /sgl-workspace/sglang/python/sglang/srt/models/qwen3_next.py &&
+      sed -i 's/current_stream.wait_stream(self.alt_stream)/if self.alt_stream is not None: current_stream.wait_stream(self.alt_stream)/g' /sgl-workspace/sglang/python/sglang/srt/models/qwen3_next.py &&
+      echo '[INFO] Patch Complete. Launching Experiment B (Raw Output)...' &&
+      python3 -m sglang.launch_server
+      --model-path Qwen/Qwen3-Next-80B-A3B-Thinking
+      --tp 1 --host 0.0.0.0 --port 30001
+      --quantization fp8
+      --kv-cache-dtype bfloat16
+      --context-length 131072
+      --mem-fraction-static 0.92
+      --trust-remote-code
+      --attention-backend triton
+      --chunked-prefill-size 16384
+      --tool-call-parser qwen
+      --speculative-algo NEXTN
+      --speculative-num-steps 3
+      --speculative-eagle-topk 1
+      --speculative-num-draft-tokens 4
+      "
+
 
   solo-architect-qwen3-next-80b-80k-bup1:
     profiles: ["solo-architect-qwen3-next-80b-80k-bup1"]
