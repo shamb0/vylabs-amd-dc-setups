@@ -119,7 +119,7 @@ services:
       - NCCL_SOCKET_IFNAME=eth0
       - SGLANG_USE_AITER=0
       - SGLANG_USE_TRITON_FLASH_ATTN=1
-      - MAX_MCP_OUTPUT_TOKENS=8000
+      - MAX_MCP_OUTPUT_TOKENS=64000
     # =========================================================================
     # EXPERIMENT A: Parser Enabled
     # 1. Applies ROCm Hot Patch
@@ -143,10 +143,6 @@ services:
       --attention-backend triton
       --chunked-prefill-size 16384
       --reasoning-parser deepseek-r1
-      --speculative-algo NEXTN
-      --speculative-num-steps 3
-      --speculative-eagle-topk 1
-      --speculative-num-draft-tokens 4
       "
 
   solo-architect-qwen3-next-80b-80k-parser-off:
@@ -176,7 +172,7 @@ services:
       - NCCL_SOCKET_IFNAME=eth0
       - SGLANG_USE_AITER=0
       - SGLANG_USE_TRITON_FLASH_ATTN=1
-      - MAX_MCP_OUTPUT_TOKENS=8000
+      - MAX_MCP_OUTPUT_TOKENS=64000
     # =========================================================================
     # EXPERIMENT B: TRANSPARENT BRAIN (No Parser)
     # 1. Applies ROCm Hot Patch
@@ -200,10 +196,6 @@ services:
       --attention-backend triton
       --chunked-prefill-size 16384
       --tool-call-parser qwen
-      --speculative-algo NEXTN
-      --speculative-num-steps 3
-      --speculative-eagle-topk 1
-      --speculative-num-draft-tokens 4
       "
 
 
